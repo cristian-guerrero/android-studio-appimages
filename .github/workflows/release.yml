@@ -48,9 +48,12 @@ jobs:
 
             - name: 🔢 Get version
               run: |
-                  version=$(./scripts/version-$X_APP_RELEASE.sh | xargs)
+                  output=$(./scripts/version-$X_APP_RELEASE.sh)
+                  version=$(echo "$output" | head -1 | xargs)
+                  url=$(echo "$output" | tail -1 | xargs)
                   echo "X_APP_VERSION=${version}" >> $GITHUB_ENV
                   echo "X_TAG_NAME=v${version}" >> $GITHUB_ENV
+                  echo "X_DOWNLOAD_URL=${url}" >> $GITHUB_ENV
 
             - name: 🔐 Is build is enabled?
               run: |
@@ -71,7 +74,7 @@ jobs:
             - name: 🔨 Build executables
               run: |
                   find ./scripts -type f -name "*.sh" -exec chmod +x {} \;
-                  ./scripts/build-podman.sh $X_APP_VERSION $X_APP_RELEASE
+                  ./scripts/build-podman.sh $X_APP_VERSION $X_APP_RELEASE "$X_DOWNLOAD_URL"
               if: ${{ env.X_REQUIRES_BUILD == 'yes' }}
 
             - name: 🚀 Upload executables

@@ -15,6 +15,7 @@ apprun_template_file="${templates_dir}/AppRun"
 
 app_version=$1
 app_release=$2
+download_url_param=${3:-}
 echo "Android Studio Version: ${app_version}"
 echo "Android Studio Release: ${app_release}"
 
@@ -65,12 +66,24 @@ fi
 
 app_dir="${artifacts_dir}/${app_name}.AppDir"
 archive_file="${artifacts_dir}/android-studio-${app_version}-linux.tar.gz"
-download_url="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/${app_version}/android-studio-${app_version}-linux.tar.gz"
+if [ -n "${download_url_param}" ]; then
+    download_url="${download_url_param}"
+else
+    download_url="https://redirector.gvt1.com/edgedl/android/studio/ide-zips/${app_version}/android-studio-${app_version}-linux.tar.gz"
+fi
 
 if ! [ -d "${app_dir}" ]; then
     if ! [ -f "${archive_file}" ]; then
         echo "Downloading ${download_url}"
-        curl --fail -Ls -A "${curl_ua}" "${download_url}" -o "${archive_file}"
+        if ! curl --fail -Ls -A "${curl_ua}" "${download_url}" -o "${archive_file}"; then
+            if [ -z "${download_url_param}" ]; then
+                alt_url="https://edgedl.me.gvt1.com/android/studio/ide-zips/${app_version}/android-studio-${app_version}-linux.tar.gz"
+                echo "First URL failed, trying alternative: ${alt_url}"
+                curl --fail -Ls -A "${curl_ua}" "${alt_url}" -o "${archive_file}"
+            else
+                exit 1
+            fi
+        fi
         echo "Downloaded ${archive_file}"
     else
         echo "Skipping download..."

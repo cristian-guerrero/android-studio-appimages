@@ -9,6 +9,7 @@ dist_dir="${root_dir}/dist"
 
 app_version=$1
 app_release=$2
+download_url=${3:-}
 container_name="android-studio-appimage"
 work_dir="/android-studio-appimage"
 
@@ -28,7 +29,11 @@ done
 podman exec "${container_name}" find "${work_dir}/scripts" -type f -name "*.sh" -exec chmod +x {} \;
 
 echo "Starting build..."
-podman exec "${container_name}" "${work_dir}/scripts/build.sh" "${app_version}" "${app_release}"
+if [ -n "${download_url}" ]; then
+    podman exec "${container_name}" "${work_dir}/scripts/build.sh" "${app_version}" "${app_release}" "${download_url}"
+else
+    podman exec "${container_name}" "${work_dir}/scripts/build.sh" "${app_version}" "${app_release}"
+fi
 
 echo "Copying build artifacts..."
 podman cp "${container_name}:${work_dir}/dist" "${dist_dir}"
